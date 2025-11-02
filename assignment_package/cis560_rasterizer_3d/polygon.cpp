@@ -6,7 +6,7 @@ void Polygon::Triangulate()
     //TODO: Populate list of triangles
     unsigned int n = m_verts.size() - 2; // 三角形的数量
     for (unsigned int i = 0; i < n; i++) {
-        m_tris.push_back({i, i + 1, i + 2});
+        m_tris.push_back({0, i + 1, i + 2});
     }
 }
 
@@ -141,7 +141,7 @@ std::array<float, 4> GetTriangleBoundingBox(const Polygon& polygon, size_t index
         box[3] = std::max(polygon.m_verts[tri.m_indices[i]].m_pos.y, box[3]);
     }
     for (auto & pos : box) {
-        pos = std::clamp(pos, 0.f, 512.f);
+        pos = std::clamp(pos, 0.f, 511.f);
     }
     return box;
 }

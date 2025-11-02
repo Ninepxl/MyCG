@@ -56,7 +56,7 @@ public:
 
     // Creates a set of triangles that, when combined, fill the area of this convex polygon.
     /**
-     * @brief Triangulate
+     * @brief Triangulate 多边型顶点拆分成多个三角形
      *
      */
     void Triangulate();

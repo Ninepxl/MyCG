@@ -5,12 +5,12 @@
 class Line {
 public:
     Line(const glm::vec2& startPos, const glm::vec2& endPos);
-
+    Line();
     /**
      * @brief getIntersection 获得 y = a 与 该线的交点
      * @param y
      * @param x
-     * @return
+     * @return 返回两条线是否相交
      */
     bool getIntersection(int y, float* x);
 private:

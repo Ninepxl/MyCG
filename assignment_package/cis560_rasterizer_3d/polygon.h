@@ -53,8 +53,12 @@ public:
     Polygon(const Polygon& p);
     ~Polygon();
 
-    // TODO: Complete the body of Triangulate() in polygon.cpp
+
     // Creates a set of triangles that, when combined, fill the area of this convex polygon.
+    /**
+     * @brief Triangulate
+     *
+     */
     void Triangulate();
 
     // Copies the input QImage into this Polygon's texture
@@ -78,3 +82,11 @@ public:
 // Returns the color of the pixel in the image at the specified texture coordinates.
 // Returns white if the image is a null pointer
 glm::vec3 GetImageColor(const glm::vec2 &uv_coord, const QImage* const image);
+
+/**
+ * @brief GetTriangleBoundingBox 计算三角形包围盒
+ * @param polygon 多边形
+ * @param index 多边形中三角形的索引
+ * @return {minX, minY, maxX, maxY} 三角形的包围盒
+ */
+std::array<float, 4> GetTriangleBoundingBox(const Polygon& polygon, size_t index);

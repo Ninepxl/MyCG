@@ -4,6 +4,10 @@
 void Polygon::Triangulate()
 {
     //TODO: Populate list of triangles
+    unsigned int n = m_verts.size() - 2; // 三角形的数量
+    for (unsigned int i = 0; i < n; i++) {
+        m_tris.push_back({i, i + 1, i + 2});
+    }
 }
 
 glm::vec3 GetImageColor(const glm::vec2 &uv_coord, const QImage* const image)
@@ -120,4 +124,24 @@ Vertex &Polygon::VertAt(unsigned int i)
 Vertex Polygon::VertAt(unsigned int i) const
 {
     return m_verts[i];
+}
+
+std::array<float, 4> GetTriangleBoundingBox(const Polygon& polygon, size_t index) {
+    const auto& triangle = polygon.m_tris[index];
+    std::array<float, 4> box; // {minX, minY, maxX, maxY}
+    box[0] = polygon.m_verts[triangle.m_indices[0]].m_pos.x;
+    box[2] = polygon.m_verts[triangle.m_indices[0]].m_pos.x;
+    box[1] = polygon.m_verts[triangle.m_indices[0]].m_pos.y;
+    box[3] = polygon.m_verts[triangle.m_indices[0]].m_pos.y;
+    for (int i = 1; i < 3; i++) {
+        const auto& tri = polygon.m_tris[index];
+        box[0] = std::min(polygon.m_verts[tri.m_indices[i]].m_pos.x, box[0]);
+        box[2] = std::max(polygon.m_verts[tri.m_indices[i]].m_pos.x, box[2]);
+        box[1] = std::min(polygon.m_verts[tri.m_indices[i]].m_pos.y, box[1]);
+        box[3] = std::max(polygon.m_verts[tri.m_indices[i]].m_pos.y, box[3]);
+    }
+    for (auto & pos : box) {
+        pos = std::clamp(pos, 0.f, 512.f);
+    }
+    return box;
 }

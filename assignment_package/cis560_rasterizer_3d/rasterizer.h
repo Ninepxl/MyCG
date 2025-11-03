@@ -2,12 +2,14 @@
 #include <polygon.h>
 #include <QImage>
 #include "line.h"
+#include "camera.h"
 class Rasterizer
 {
 private:
     //This is the set of Polygons loaded from a JSON scene file
     std::vector<Polygon> m_polygons;
     std::vector<float> zBuffer;
+    Camera camera;
     /**
      * @brief GetTriangleEdgeSegment 获得三角形三个边的函数表达式
      * @param polygon 多边形
@@ -35,6 +37,15 @@ private:
      * @return
      */
     glm::vec3 InterpolateColor(const glm::vec3 bary, const glm::vec3 color1, const glm::vec3 color2, const glm::vec3 color3);
+
+    /**
+     * @brief SweepLineFillPixel 使用扫描线算法光栅化一个三角形
+     * @param box 三角形的包围盒
+     * @param lines 三角形三条边的函数表达式集合
+     * @param triVertex 三角形的三个顶点集合
+     */
+    void SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines, const std::array<Vertex, 3>& triVertex, QImage& result);
+
 public:
     Rasterizer(const std::vector<Polygon>& polygons);
     QImage RenderScene();

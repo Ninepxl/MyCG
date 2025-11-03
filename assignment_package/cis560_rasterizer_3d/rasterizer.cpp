@@ -6,7 +6,7 @@
 #include "line.h"
 
 Rasterizer::Rasterizer(const std::vector<Polygon>& polygons)
-    : m_polygons(polygons), zBuffer(std::vector<float>(512 * 512, std::numeric_limits<float>::max()))
+    : m_polygons(polygons), zBuffer(std::vector<float>(512 * 512, std::numeric_limits<float>::max())), camera(Camera())
 {}
 
 QImage Rasterizer::RenderScene()
@@ -16,39 +16,19 @@ QImage Rasterizer::RenderScene()
     // Note that qRgb creates a QColor,
     // and takes in values [0, 255] rather than [0, 1].
     result.fill(qRgb(0.f, 0.f, 0.f));
+    // 遍历当前模型的所有多边形
     for (const auto& polygon : m_polygons) {
+        // 遍历多边形中的三角形
         for (size_t i = 0; i < polygon.m_tris.size(); i++) {
             auto box = GetTriangleBoundingBox(polygon, i);
             auto lines = this->GetTriangleEdgeSegment(polygon, i);
             auto tri = polygon.m_tris[i];
             std::array<Vertex, 3> triVertex{polygon.m_verts[tri.m_indices[0]], polygon.m_verts[tri.m_indices[1]], polygon.m_verts[tri.m_indices[2]]};
-            for (int row = box[1]; row <= box[3]; row++) {
-                float xLeft = 511.0f;
-                float xRight = 0.0f;
-                for (auto line : lines) {
-                    float interX = 0;
-                    if (line.getIntersection(row, &interX)) {
-                        xLeft = std::min(xLeft, interX);
-                        xRight = std::max(xRight, interX);
-                    }
-                }
-                for (int k = xLeft; k <= xRight; k++) {
-                    if (k < 0 || k >= 512) {
-                        continue;
-                    }
-                    auto bary = BarycentricInterpolate(triVertex[0], triVertex[1], triVertex[2], {k, row});
-                    glm::vec3 color = bary[0] * triVertex[0].m_color
-                                      + bary[1] * triVertex[1].m_color
-                                      + bary[2] * triVertex[2].m_color;
-                    float curPosZ = bary[0] * triVertex[0].m_pos.z
-                                   + bary[1] * triVertex[1].m_pos.z
-                                   + bary[2] * triVertex[2].m_pos.z;
-                    if (zBuffer[row * 512 + k] > curPosZ) {
-                        zBuffer[row * 512 + k] = curPosZ;
-                    }
-                    result.setPixel(k, row, qRgb(color.r, color.g, color.b));
-                }
-            }
+            // for(auto& vertex : triVertex) {
+            //     vertex.m_pos = camera.GetProjectMatrix() * camera.GetCameraMatrix() * vertex.m_pos;
+            // }
+            // 扫描线光栅化
+            SweepLineFillPixel(box, lines, triVertex, result);
         }
     }
 
@@ -99,3 +79,36 @@ glm::vec3 Rasterizer::BarycentricInterpolate(const Vertex& v0, const Vertex& v1,
 
     return glm::vec3(lambda0, lambda1, lambda2);
 }
+
+void Rasterizer:: SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines, const std::array<Vertex, 3>& triVertex, QImage& result) {
+    for (int row = box[1]; row <= box[3]; row++) {
+        float xLeft = 511.0f;
+        float xRight = 0.0f;
+        for (auto line : lines) {
+            float interX = 0;
+            if (line.getIntersection(row, &interX)) {
+                xLeft = std::min(xLeft, interX);
+                xRight = std::max(xRight, interX);
+            }
+        }
+        for (int k = xLeft; k <= xRight; k++) {
+            if (k < 0 || k >= 512) {
+                continue;
+            }
+            // 获得重心坐标
+            auto bary = BarycentricInterpolate(triVertex[0], triVertex[1], triVertex[2], {k, row});
+            glm::vec3 color = bary[0] * triVertex[0].m_color
+                              + bary[1] * triVertex[1].m_color
+                              + bary[2] * triVertex[2].m_color;
+            float curPosZ = bary[0] * triVertex[0].m_pos.z
+                            + bary[1] * triVertex[1].m_pos.z
+                            + bary[2] * triVertex[2].m_pos.z;
+            if (zBuffer[row * 512 + k] >= curPosZ) {
+                zBuffer[row * 512 + k] = curPosZ;
+                result.setPixel(k, row, qRgb(color.r, color.g, color.b));
+            }
+        }
+    }
+}
+
+

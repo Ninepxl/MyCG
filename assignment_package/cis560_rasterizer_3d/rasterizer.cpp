@@ -6,7 +6,7 @@
 #include "line.h"
 
 Rasterizer::Rasterizer(const std::vector<Polygon>& polygons)
-    : m_polygons(polygons)
+    : m_polygons(polygons), zBuffer(std::vector<float>(512 * 512, std::numeric_limits<float>::max()))
 {}
 
 QImage Rasterizer::RenderScene()
@@ -40,6 +40,12 @@ QImage Rasterizer::RenderScene()
                     glm::vec3 color = bary[0] * triVertex[0].m_color
                                       + bary[1] * triVertex[1].m_color
                                       + bary[2] * triVertex[2].m_color;
+                    float curPosZ = bary[0] * triVertex[0].m_pos.z
+                                   + bary[1] * triVertex[1].m_pos.z
+                                   + bary[2] * triVertex[2].m_pos.z;
+                    if (zBuffer[row * 512 + k] > curPosZ) {
+                        zBuffer[row * 512 + k] = curPosZ;
+                    }
                     result.setPixel(k, row, qRgb(color.r, color.g, color.b));
                 }
             }

@@ -7,7 +7,7 @@ class Rasterizer
 private:
     //This is the set of Polygons loaded from a JSON scene file
     std::vector<Polygon> m_polygons;
-
+    std::vector<float> zBuffer;
     /**
      * @brief GetTriangleEdgeSegment 获得三角形三个边的函数表达式
      * @param polygon 多边形

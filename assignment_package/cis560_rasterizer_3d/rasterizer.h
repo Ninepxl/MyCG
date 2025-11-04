@@ -9,14 +9,23 @@ private:
     //This is the set of Polygons loaded from a JSON scene file
     std::vector<Polygon> m_polygons;
     std::vector<float> zBuffer;
-    Camera camera;
+    float width;
+    float height;
+
+    /**
+     * @brief GetTriangleBoundingBox 得到三角形的包围盒
+     * @param triVertex
+     * @return
+     */
+    std::array<float, 4> GetTriangleBoundingBox(const std::array<Vertex, 3>& triVertex);
+
     /**
      * @brief GetTriangleEdgeSegment 获得三角形三个边的函数表达式
      * @param polygon 多边形
      * @param i 多边形中三角形的index
      * @return
      */
-    std::array<Line, 3> GetTriangleEdgeSegment(const Polygon& polygon, size_t i);
+    std::array<Line, 3> GetTriangleEdgeSegment(const std::array<Vertex, 3>& triVertex);
 
     /**
      * @brief BarycentricInterpolate 得到重心坐标
@@ -44,9 +53,10 @@ private:
      * @param lines 三角形三条边的函数表达式集合
      * @param triVertex 三角形的三个顶点集合
      */
-    void SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines, const std::array<Vertex, 3>& triVertex, QImage& result);
+    void SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines, const std::array<Vertex, 3>& triVertex, const QImage* const texture, QImage& result);
 
 public:
+    Camera camera;
     Rasterizer(const std::vector<Polygon>& polygons);
     QImage RenderScene();
     void ClearScene();

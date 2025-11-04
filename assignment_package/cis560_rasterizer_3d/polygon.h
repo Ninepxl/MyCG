@@ -14,7 +14,7 @@ struct Vertex
     glm::vec3 m_color;  // The color of the vertex. X corresponds to Red, Y corresponds to Green, and Z corresponds to Blue.
     glm::vec4 m_normal; // The surface normal of the vertex (not yet used)
     glm::vec2 m_uv;     // The texture coordinates of the vertex (not yet used)
-
+    float invW; // 保存裁切空间下面的摄像机深度信息
     Vertex(glm::vec4 p, glm::vec3 c, glm::vec4 n, glm::vec2 u)
         : m_pos(p), m_color(c), m_normal(n), m_uv(u)
     {}

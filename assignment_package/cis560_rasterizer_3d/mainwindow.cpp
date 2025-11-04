@@ -13,17 +13,51 @@
 #include <QDebug>
 #include <tiny_obj_loader.h>
 
-//Poke around in this file if you want, but it's virtually uncommented!
-//You won't need to modify anything in here to complete the assignment.
-
 void MainWindow::keyPressEvent(QKeyEvent *e)
 {
-    switch(e->key())
+    switch (e->key())
     {
-    //The key shortcuts for the other menu commands were set in Qt's GUI
-    //editor. This one was implemented as a key press event for illustration purposes.
-    case Qt::Key_Escape : on_actionQuit_Esc_triggered();  break;
+    case Qt::Key_W:
+        rasterizer.camera.MoveZ(0.5f);
+        break;
+    case Qt::Key_S:
+        rasterizer.camera.MoveZ(-0.5f);
+        break;
+    case Qt::Key_A:
+        rasterizer.camera.MoveX(-0.5f);
+        break;
+    case Qt::Key_D:
+        rasterizer.camera.MoveX(0.5f);
+        break;
+    case Qt::Key_Q:
+        rasterizer.camera.MoveY(-0.5f);
+        break;
+    case Qt::Key_E:
+        rasterizer.camera.MoveY(0.5f);
+        break;
+    case Qt::Key_Up:
+        rasterizer.camera.RotationX(-5.0f);
+        break;
+    case Qt::Key_Down:
+        rasterizer.camera.RotationX(5.0f);
+        break;
+    case Qt::Key_Left:
+        rasterizer.camera.RotationY(5.0f);
+        break;
+    case Qt::Key_Right:
+        rasterizer.camera.RotationY(-5.0f);
+        break;
+    case Qt::Key_Z:
+        rasterizer.camera.RotationZ(5.0f);
+        break;
+    case Qt::Key_X:
+        rasterizer.camera.RotationZ(-5.0f);
+        break;
+    case Qt::Key_Escape:
+        on_actionQuit_Esc_triggered();
+        break;
     }
+
 
     rendered_image = rasterizer.RenderScene();
     DisplayQImage(rendered_image);

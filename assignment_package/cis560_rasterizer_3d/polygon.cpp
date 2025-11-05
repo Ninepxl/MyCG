@@ -3,7 +3,6 @@
 
 void Polygon::Triangulate()
 {
-    //TODO: Populate list of triangles
     unsigned int n = m_verts.size() - 2; // 三角形的数量
     for (unsigned int i = 0; i < n; i++) {
         m_tris.push_back({0, i + 1, i + 2});

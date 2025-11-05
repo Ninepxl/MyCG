@@ -36,22 +36,22 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
         rasterizer.camera.MoveY(0.5f);
         break;
     case Qt::Key_Up:
-        rasterizer.camera.RotationX(-5.0f);
+        rasterizer.camera.RotationX(-180.0f);
         break;
     case Qt::Key_Down:
-        rasterizer.camera.RotationX(5.0f);
+        rasterizer.camera.RotationX(180.0f);
         break;
     case Qt::Key_Left:
-        rasterizer.camera.RotationY(5.0f);
+        rasterizer.camera.RotationY(180.0f);
         break;
     case Qt::Key_Right:
-        rasterizer.camera.RotationY(-5.0f);
+        rasterizer.camera.RotationY(-180.0f);
         break;
     case Qt::Key_Z:
-        rasterizer.camera.RotationZ(5.0f);
+        rasterizer.camera.RotationZ(180.0f);
         break;
     case Qt::Key_X:
-        rasterizer.camera.RotationZ(-5.0f);
+        rasterizer.camera.RotationZ(-180.0f);
         break;
     case Qt::Key_Escape:
         on_actionQuit_Esc_triggered();

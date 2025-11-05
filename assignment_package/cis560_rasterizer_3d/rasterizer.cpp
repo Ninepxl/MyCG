@@ -2,23 +2,24 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
-#include <iostream>
 #include "line.h"
-
+#include <iostream>
 Rasterizer::Rasterizer(const std::vector<Polygon>& polygons)
     : m_polygons(polygons), zBuffer(std::vector<float>(512 * 512, std::numeric_limits<float>::max())),
-     width(512.f), height(512.f),camera(Camera())
+    width(512.f), height(512.f),camera(Camera())
 {}
 
 QImage Rasterizer::RenderScene()
 {
     QImage result(512, 512, QImage::Format_RGB32);
-    // Fill the image with black pixels.
-    // Note that qRgb creates a QColor,
-    // and takes in values [0, 255] rather than [0, 1].
     result.fill(qRgb(0.f, 0.f, 0.f));
     std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::max());  // 添加这行
     // 遍历当前模型的所有多边形
+    float rad = glm::radians(180.f);
+    glm::mat4 modelMatrix{glm::vec4{glm::cos(rad), 0, -glm::sin(rad), 0},
+                          glm::vec4{0, 1, 0, 0},
+                          glm::vec4{glm::sin(rad), 0, glm::cos(rad), 0},
+                          {0, 0, 0, 1}};
     for (auto& polygon : m_polygons) {
         // 遍历多边形中的三角形
         for (size_t i = 0; i < polygon.m_tris.size(); i++) {
@@ -31,8 +32,6 @@ QImage Rasterizer::RenderScene()
                 vertex.m_pos = camera.GetProjectMatrix() * camera.GetCameraMatrix() * vertex.m_pos;
                 // 透视除法
                 vertex.m_pos /= vertex.m_pos.w;
-                // vertex.m_pos.w = 1 / vertex.m_pos.w;
-                // 视口变换
                 vertex.m_pos.x = (vertex.m_pos.x + 1.0f) * 0.5f * width;
                 vertex.m_pos.y = (1.0f - vertex.m_pos.y) * 0.5f * height;
             }
@@ -92,16 +91,19 @@ void Rasterizer:: SweepLineFillPixel(const std::array<float, 4>& box, const std:
             }
             // 获得重心坐标
             auto bary = BarycentricInterpolate(triVertex[0], triVertex[1], triVertex[2], {k, row});
-            glm::vec4 pos;
-            glm::vec2 uv;
+            glm::vec2 uz;
+            float zInv = 0;
             for (int i = 0; i < 3; i++) {
-                pos += bary[i] * triVertex[i].m_pos;
-                uv += bary[i] * triVertex[i].m_uv;
+                zInv += bary[i] * (1 / triVertex[i].m_pos.z);
+                uz += bary[i] * (triVertex[i].m_uv / triVertex[i].m_pos.z);
             }
+            // float z = 1 / zInv;
+            glm::vec2 uv = uz / zInv;
             glm::vec3 color = GetImageColor(uv, texture);
-            if (zBuffer[row * width + k] >= pos.z) {
-                zBuffer[row * width + k] = pos.z;
-                result.setPixel(k, row, qRgb(0, 0, 255));
+            if (zBuffer[row * width + k] >= zInv) {
+                std::cout << "zInv: " << zInv << std::endl;
+                zBuffer[row * width + k] = zInv;
+                result.setPixel(k, row, qRgb(color.r, color.g, color.b));
             }
         }
     }

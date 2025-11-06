@@ -11,7 +11,7 @@ private:
     std::vector<float> zBuffer;
     float width;
     float height;
-
+    glm::mat4 modelMatrix;
     /**
      * @brief GetTriangleBoundingBox 得到三角形的包围盒
      * @param triVertex
@@ -55,8 +55,26 @@ private:
      */
     void SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines, const std::array<Vertex, 3>& triVertex, const QImage* const texture, QImage& result);
 
+    /**
+     * @brief IsFrontFacing 检查当前三角形是否是正面
+     * @param tirVertex
+     * @return
+     */
+    bool IsFrontFacing(const std::array<Vertex, 3>& tirVertex);
+
+    /**
+     * @brief SSAAColorSimple 超采样颜色
+     * @param x
+     * @param y
+     * @param triVertex
+     * @param texture
+     * @return
+     */
+    glm::vec3 SSAAColorSimple(int x, int y, const std::array<Vertex, 3>& triVertex, const QImage* const texture);
 public:
+    int rotateAngle;
     Camera camera;
+    int simple;
     Rasterizer(const std::vector<Polygon>& polygons);
     QImage RenderScene();
     void ClearScene();

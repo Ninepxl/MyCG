@@ -32,6 +32,13 @@ private slots:
 
     void on_actionQuit_Esc_triggered();
 
+
+    void on_rotateModelBtn_clicked();
+
+    void on_SSAABtn_clicked();
+
+    void on_simpleSpin_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
     Polygon LoadOBJ(const QString &file, const QString &polyName);

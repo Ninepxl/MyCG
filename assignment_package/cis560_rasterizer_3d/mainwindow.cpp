@@ -283,3 +283,26 @@ void MainWindow::on_actionQuit_Esc_triggered()
 {
     QApplication::exit();
 }
+
+
+void MainWindow::on_rotateModelBtn_clicked()
+{
+    this->rasterizer.rotateAngle += 45;
+    this->rasterizer.rotateAngle %= 360;
+    rendered_image = rasterizer.RenderScene();
+    DisplayQImage(rendered_image);
+}
+
+
+void MainWindow::on_SSAABtn_clicked()
+{
+    rendered_image = rasterizer.RenderScene();
+    DisplayQImage(rendered_image);
+}
+
+
+void MainWindow::on_simpleSpin_valueChanged(int arg1)
+{
+    this->rasterizer.simple = arg1;
+}
+

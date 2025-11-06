@@ -4,24 +4,25 @@
 #include <glm/gtx/string_cast.hpp>
 #include "line.h"
 #include <iostream>
+
 Rasterizer::Rasterizer(const std::vector<Polygon>& polygons)
     : m_polygons(polygons), zBuffer(std::vector<float>(512 * 512, std::numeric_limits<float>::max())),
-    width(512.f), height(512.f),camera(Camera())
-{}
+    width(512.f), height(512.f), modelMatrix(glm::mat4(1.f)), rotateAngle(0), camera(Camera()), simple(1)
+{
+}
 
 QImage Rasterizer::RenderScene()
 {
     QImage result(512, 512, QImage::Format_RGB32);
     result.fill(qRgb(0.f, 0.f, 0.f));
     std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::max());  // 添加这行
-    // 遍历当前模型的所有多边形
-    float rad = glm::radians(180.f);
-    glm::mat4 modelMatrix{glm::vec4{glm::cos(rad), 0, -glm::sin(rad), 0},
-                          glm::vec4{0, 1, 0, 0},
-                          glm::vec4{glm::sin(rad), 0, glm::cos(rad), 0},
-                          {0, 0, 0, 1}};
     for (auto& polygon : m_polygons) {
         // 遍历多边形中的三角形
+        float rad = glm::radians((float)this->rotateAngle);
+        modelMatrix = {glm::vec4{glm::cos(rad), 0, -glm::sin(rad), 0},
+                       glm::vec4{0, 1, 0, 0},
+                       glm::vec4{glm::sin(rad), 0, glm::cos(rad), 0},
+                       {0, 0, 0, 1}};
         for (size_t i = 0; i < polygon.m_tris.size(); i++) {
             auto tri = polygon.m_tris[i];
             std::array<Vertex, 3> triVertex{polygon.m_verts[tri.m_indices[0]],
@@ -29,15 +30,17 @@ QImage Rasterizer::RenderScene()
                                             polygon.m_verts[tri.m_indices[2]]};
             for (Vertex& vertex : triVertex) {
                 // 模型空间 -> 世界空间 -> 相机空间 -> 裁剪空间
-                vertex.m_pos = camera.GetProjectMatrix() * camera.GetCameraMatrix() * vertex.m_pos;
+                vertex.m_pos = camera.GetProjectMatrix() * camera.GetCameraMatrix() * modelMatrix * vertex.m_pos;
                 // 透视除法
                 vertex.m_pos /= vertex.m_pos.w;
                 vertex.m_pos.x = (vertex.m_pos.x + 1.0f) * 0.5f * width;
                 vertex.m_pos.y = (1.0f - vertex.m_pos.y) * 0.5f * height;
             }
-            auto box = GetTriangleBoundingBox(triVertex);
-            auto lines = this->GetTriangleEdgeSegment(triVertex);
-            SweepLineFillPixel(box, lines, triVertex, polygon.mp_texture, result);
+            if (IsFrontFacing(triVertex)) {
+                auto box = GetTriangleBoundingBox(triVertex);
+                auto lines = this->GetTriangleEdgeSegment(triVertex);
+                SweepLineFillPixel(box, lines, triVertex, polygon.mp_texture, result);
+            }
         }
     }
     return result;
@@ -76,6 +79,9 @@ glm::vec3 Rasterizer::BarycentricInterpolate(const Vertex& v0, const Vertex& v1,
 
 void Rasterizer:: SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines, const std::array<Vertex, 3>& triVertex, const QImage* const texture, QImage& result) {
     for (int row = box[1]; row <= box[3]; row++) {
+        if (row < 0 || row >= 512.f) {
+            continue;
+        }
         float xLeft = 512.0f;
         float xRight = 0.0f;
         for (auto line : lines) {
@@ -90,23 +96,49 @@ void Rasterizer:: SweepLineFillPixel(const std::array<float, 4>& box, const std:
                 continue;
             }
             // 获得重心坐标
-            auto bary = BarycentricInterpolate(triVertex[0], triVertex[1], triVertex[2], {k, row});
+            auto bary = BarycentricInterpolate(triVertex[0], triVertex[1], triVertex[2], {k + 0.5, row + 0.5});
             glm::vec2 uz;
             float zInv = 0;
             for (int i = 0; i < 3; i++) {
                 zInv += bary[i] * (1 / triVertex[i].m_pos.z);
                 uz += bary[i] * (triVertex[i].m_uv / triVertex[i].m_pos.z);
             }
-            // float z = 1 / zInv;
             glm::vec2 uv = uz / zInv;
-            glm::vec3 color = GetImageColor(uv, texture);
-            if (zBuffer[row * width + k] >= zInv) {
-                std::cout << "zInv: " << zInv << std::endl;
-                zBuffer[row * width + k] = zInv;
-                result.setPixel(k, row, qRgb(color.r, color.g, color.b));
+            if (zBuffer[row * width + k] < zInv) {
+                continue;
             }
+            glm::vec3 color = simple > 1 ? this->SSAAColorSimple(k, row, triVertex, texture) : GetImageColor(uv, texture);
+            zBuffer[row * width + k] = zInv;
+            result.setPixel(k, row, qRgb(color.r, color.g, color.b));
         }
     }
+}
+
+glm::vec3 Rasterizer::SSAAColorSimple(int x, int y, const std::array<Vertex, 3>& triVertex, const QImage* const texture) {
+    float step = 1.0f / simple;
+    int simpleCount = 0;
+    glm::vec3 colorSum(0.0f);
+    for (int i = 0; i < simple; i++) {
+        for (int j = 0; j < simple; j++) {
+            float sampleX = x + (j + 0.5f) * step;
+            float sampleY = y + (i + 0.5f) * step;
+            auto bary = BarycentricInterpolate(triVertex[0], triVertex[1], triVertex[2], {sampleX, sampleY});
+
+            glm::vec2 uz(0.0f);
+            float zInv = 0;
+            for (int vi = 0; vi < 3; vi++) {
+                zInv += bary[vi] * (1 / triVertex[vi].m_pos.z);
+                uz += bary[vi] * (triVertex[vi].m_uv / triVertex[vi].m_pos.z);
+            }
+
+            glm::vec2 uv = uz / zInv;
+            glm::vec3 color = GetImageColor(uv, texture);
+
+            colorSum += color;
+            simpleCount++;
+        }
+    }
+    return colorSum / (float)simpleCount;
 }
 
 std::array<float, 4> Rasterizer::GetTriangleBoundingBox(const std::array<Vertex, 3>& triVertex) {
@@ -126,4 +158,10 @@ std::array<float, 4> Rasterizer::GetTriangleBoundingBox(const std::array<Vertex,
         pos = std::clamp(pos, 0.f, 512.f);
     }
     return box;
+}
+
+bool Rasterizer::IsFrontFacing(const std::array<Vertex, 3>& triVertex) {
+    glm::vec2 edge1{triVertex[1].m_pos.x - triVertex[0].m_pos.x, triVertex[1].m_pos.y - triVertex[0].m_pos.y};
+    glm::vec2 edge2{triVertex[2].m_pos.x - triVertex[0].m_pos.x, triVertex[2].m_pos.y - triVertex[0].m_pos.y};
+    return edge1.x * edge2.y - edge1.y * edge2.x < 0;
 }

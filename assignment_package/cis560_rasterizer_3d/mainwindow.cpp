@@ -306,3 +306,11 @@ void MainWindow::on_simpleSpin_valueChanged(int arg1)
     this->rasterizer.simple = arg1;
 }
 
+
+void MainWindow::on_shdingBtn_clicked()
+{
+    this->rasterizer.shading = !this->rasterizer.shading;
+    rendered_image = rasterizer.RenderScene();
+    DisplayQImage(rendered_image);
+}
+

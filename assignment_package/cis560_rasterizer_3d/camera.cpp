@@ -71,3 +71,6 @@ void Camera::RotationZ(float angle) {
     right = rotation * right;
     up = rotation * up;
 }
+glm::vec3 Camera::GetCameraPos() {
+    return glm::vec3(this->pos);
+}

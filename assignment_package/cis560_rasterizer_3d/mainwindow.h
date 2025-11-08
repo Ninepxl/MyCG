@@ -39,6 +39,8 @@ private slots:
 
     void on_simpleSpin_valueChanged(int arg1);
 
+    void on_shdingBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
     Polygon LoadOBJ(const QString &file, const QString &polyName);

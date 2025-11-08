@@ -15,6 +15,7 @@ public:
     void RotationX(float angle);
     void RotationY(float angle);
     void RotationZ(float angle);
+    glm::vec3 GetCameraPos();
 
 private:
     glm::vec4 forward; // 摄像机的朝向的单位向量

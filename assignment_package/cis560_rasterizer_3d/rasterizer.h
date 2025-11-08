@@ -53,7 +53,10 @@ private:
      * @param lines 三角形三条边的函数表达式集合
      * @param triVertex 三角形的三个顶点集合
      */
-    void SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines, const std::array<Vertex, 3>& triVertex, const QImage* const texture, QImage& result);
+    void SweepLineFillPixel(const std::array<float, 4>& box, const std::array<Line, 3>& lines,
+                            const std::array<Vertex, 3>& triVertex,
+                            const QImage* const texture, QImage& result,
+                            const std::array<glm::vec3, 3> wordPos);
 
     /**
      * @brief IsFrontFacing 检查当前三角形是否是正面
@@ -71,10 +74,27 @@ private:
      * @return
      */
     glm::vec3 SSAAColorSimple(int x, int y, const std::array<Vertex, 3>& triVertex, const QImage* const texture);
+
+    /**
+     * @brief DiffuseShader 漫反射着色
+     * @return
+     */
+    glm::vec3 DiffuseShader(const glm::vec3& nor);
+
+    /**
+     * @brief SpecularShader 镜面反射着色
+     * @param nor
+     * @return
+     */
+    glm::vec3 SpecularShader(const glm::vec3& nor, const glm::vec3& framePo);
 public:
     int rotateAngle;
     Camera camera;
     int simple;
+    glm::vec3 lightDirection;
+    glm::vec3 lightColor;
+    float kd; // 漫反射系数
+    bool shading;
     Rasterizer(const std::vector<Polygon>& polygons);
     QImage RenderScene();
     void ClearScene();

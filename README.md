@@ -7,3 +7,4 @@
 - 背景剔除
 - 深度测试
 - Blinn-phong 光照模型
+![](./raster1.png)

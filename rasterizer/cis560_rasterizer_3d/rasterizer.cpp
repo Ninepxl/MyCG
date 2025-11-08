@@ -201,6 +201,7 @@ glm::vec3 Rasterizer::DiffuseShader(const glm::vec3& nor) {
     float diffuseFactor = std::max(0.f, glm::dot(nor, this->lightDirection));
     return diffuseFactor * this->lightColor;
 }
+
 glm::vec3 Rasterizer::SpecularShader(const glm::vec3& nor, const glm::vec3& framePos) {
     glm::vec3 v = glm::normalize(this->camera.GetCameraPos() - framePos);
     glm::vec3 h = glm::normalize(v + this->lightDirection);

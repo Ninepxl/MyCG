@@ -32,3 +32,4 @@ build-*
 *.autosave
 .vscode/*
 assignment_package/.vscode/*
+./gitignore
